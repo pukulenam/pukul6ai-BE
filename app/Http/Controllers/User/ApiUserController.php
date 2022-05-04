@@ -20,6 +20,20 @@ class ApiUserController extends Controller
         return response($user, 200);
     }
 
+    public function getOneUser(Request $request, $id) {
+        $request['id'] = $id;
+        $validator = Validator::make($request->all(), [
+            'id' => 'required|integer|exists:users,id',
+        ]);
+        if ($validator->fails()) {
+            return response(["errors" => $validator->errors()->all()], 422);
+        }
+
+        $user = User::where('id', $request['id'])->first();
+
+        return response($user, 200);
+    }
+
     public function updateUser(Request $req) {
         $validator = Validator::make($req->all(), [
             'id' => 'required|integer|exists:users,id',

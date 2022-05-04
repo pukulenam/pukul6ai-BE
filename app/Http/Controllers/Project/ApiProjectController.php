@@ -59,6 +59,7 @@ class ApiProjectController extends Controller
 
     public function updateProject(Request $request) {
         $validator = Validator::make($request->all(), [
+            'id' => 'required|integer|exists:projects',
             'name' => 'required|string|max:255',
             'userid' => 'required|exists:users,id',
             'adminid' => 'required|exists:users,id',
