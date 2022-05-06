@@ -23,6 +23,8 @@ class ApiAuthController extends Controller
 
         $request['password'] = Hash::make($request['password']);
         $user = User::create($request->toArray());
+
+        $user['role'] = 'user';
         $token = $user->createToken('Token')->plainTextToken;
 
         $response = ['user'=>$user, 'token'=>$token];
@@ -39,12 +41,11 @@ class ApiAuthController extends Controller
             return response(['errors' => $validator->errors()->all()]);
         }
 
-        $user = User::where('username', $request->username)->first();
+        $user = User::where('username', $request['username'])->first();
         if ($user) {
             if (Hash::check($request->password, $user->password)) {
-                
                 $response['user'] = $user;
-                $response['token'] = $user->createToken('TokenHotel')->plainTextToken;
+                $response['token'] = $user->createToken('Token')->plainTextToken;
                 return response($response, 200);
             } else {
                 $response = ["message" => "Password mismatch"];
