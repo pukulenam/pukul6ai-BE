@@ -23,6 +23,8 @@ class ApiAuthController extends Controller
 
         $request['password'] = Hash::make($request['password']);
         $user = User::create($request->toArray());
+
+        $user['role'] = 'user';
         $token = $user->createToken('Token')->plainTextToken;
 
         $response = ['user'=>$user, 'token'=>$token];

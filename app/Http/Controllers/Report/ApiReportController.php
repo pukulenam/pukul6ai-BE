@@ -13,8 +13,19 @@ use Illuminate\Support\Str;
 
 class ApiReportController extends Controller
 {
-    public function getAllProjectsByProjectId(Request $request, $projectid) {
+    public function getAllReportsByProjectId(Request $request, $projectid) {
         $report = Report::where('project_id', $projectid)->get();
+
+        $validator = Validator::make(['id' => $projectid], [ 'id' => 'required|integer|exists:projects']);
+        if ($validator->fails())
+        {
+            return response(['errors'=>$validator->errors()->all()], 422);
+        }
+        $project = Project::where('id', $projectid)->first();
+
+        if ((auth()->user()->id != $project['userid']) && auth()->user()->role != "admin") {
+            return response(["errors" => array("You Are Not Authenticated")], 422);
+        }
 
         return response($report, 200);
     }
@@ -26,8 +37,15 @@ class ApiReportController extends Controller
         {
             return response(['errors'=>$validator->errors()->all()], 422);
         }
-
+        
         $report = Report::where('id', $id)->first();
+
+        $project = Project::where('id', $report['project_id'])->first();
+
+        if ((auth()->user()->id != $project['userid']) && auth()->user()->role != "admin") {
+            return response(["errors" => array("You Are Not Authenticated")], 422);
+        }
+
 
         return response($report, 200);
     }
@@ -45,11 +63,31 @@ class ApiReportController extends Controller
             return response(['errors'=>$validator->errors()->all()], 422);
         }
 
-        $is_admin = User::where('id', $request['adminid'])->first();
-        if ($is_admin['role'] != 'admin') {
-            $res['errors'] = $is_admin['full_name'] . "is not an admin";
-            return response($res, 422);
+        $admin = [];
+
+        $count = 0;
+
+        $tmp = "";
+        for ($i = 0; $i < Str::length($request['admin']); $i++) {
+            if ($request['admin'][$i] == ",") {
+                $admin = Arr::add($admin, $count++, $tmp);
+                $tmp = 0; continue;
+            }
+            $tmp .= $request['admin'][$i];
         }
+
+        $admin = Arr::add($admin, $count++, $tmp);
+
+        $res = "";
+        for ($i = 0; $i < $count; $i++) {
+            $user = User::where('id', (int)$admin[$i])->first();
+            if ($user['role'] != 'admin') {
+                $res .= $user['full_name']." not an admin\n";
+            }
+        }
+
+        if ($res != "")
+            return response(array($res), 422);
 
         $request['end'] = $request['end'] == NULL ? NULL : $request['end'];
         $request['attachment'] = $request['attachment'] == NULL ? NULL : $request['attachment'];

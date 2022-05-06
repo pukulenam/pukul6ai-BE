@@ -31,6 +31,10 @@ class ApiUserController extends Controller
 
         $user = User::where('id', $request['id'])->first();
 
+        if ((auth()->user()->id != $id && $user['role'] != 'admin') && auth()->user()->role != "admin") {
+            return response(["errors" => "You Are Not Authenticated"], 422);
+        }
+        
         return response($user, 200);
     }
 
