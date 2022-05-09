@@ -105,6 +105,7 @@ class ApiReportController extends Controller
     public function addReport(Request $request) {
         $validator = Validator::make($request->all(), [
             'description' => 'required|string|max:255',
+            'project_id' => 'required|integer|exists:projects,id',
             'start' => 'required|date_format:Y/m/d H:i:s',
             'end' => 'date_format:Y/m/d H:i:s',
             'admin' => 'required|string|max:255',
@@ -153,6 +154,7 @@ class ApiReportController extends Controller
     public function updateReport(Request $request) {
         $validator = Validator::make($request->all(), [
             'id' => 'required|integer|exists:reports',
+            'project_id' => 'required|integer|exists:projects,id',
             'description' => 'required|string|max:255',
             'start' => 'required|date_format:Y/m/d H:i:s',
             'end' => 'date_format:Y/m/d H:i:s|nullable',
