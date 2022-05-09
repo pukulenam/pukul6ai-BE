@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\ApiAuthController;
 use App\Http\Controllers\Project\ApiProjectController;
 use App\Http\Controllers\Report\ApiReportController;
+use App\Http\Controllers\Schedule\ApiScheduleController;
 use App\Http\Controllers\User\ApiUserController;
 use App\Models\User;
 use Facade\FlareClient\Api;
@@ -37,6 +38,10 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
 
     //secure
     Route::get('/report/{id}', [ApiReportController::class, 'getOneReportById']);
+
+    //not check
+    Route::get('/schedule/user/{id}', [ApiScheduleController::class, 'getOneScheduleByUserId']);
+
 });
 
 Route::group(['middleware' => ['auth:sanctum', 'is_admin']], function() {
@@ -51,6 +56,10 @@ Route::group(['middleware' => ['auth:sanctum', 'is_admin']], function() {
     Route::post('/report', [ApiReportController::class, 'addReport']);
     Route::put('/report', [ApiReportController::class, 'updateReport']);
     Route::delete('/report', [ApiReportController::class, 'deleteReport']);
+
+    Route::get('/schedule', [ApiScheduleController::class, 'getAllSchedule']);
+    Route::post('/schedule', [ApiScheduleController::class, 'addSchedule']);
+    Route::get('/schedule/admin/{id}', [ApiScheduleController::class, 'getOneScheduleByAdminId']);
 });
 
 Route::group(['middleware' => ['cors', 'json.response']], function () {
