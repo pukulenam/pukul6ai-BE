@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Project;
 
 use App\Http\Controllers\Controller;
 use App\Models\Project;
+use App\Models\Report;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -16,18 +17,60 @@ class ApiProjectController extends Controller
         if ((auth()->user()->id != $userid) && auth()->user()->role != "admin") {
             return response(["errors" => array("You Are Not Authenticated")], 422);
         }
+        
+        foreach ($project as $p) {
+            $total_time = 0;
+            $report = Report::where('project_id', $p['id'])->get();
+
+            foreach ($report as $r) {
+                $r['end'] != NULL ? (
+                    $total_time += strtotime($r['end']) - strtotime($r['start'])
+                ) : NULL;
+            }
+
+            $p['adminid'] = User::where('id', $p['adminid'])->pluck('full_name')[0];
+            $p['total_time'] = $total_time;
+        }
 
         return response($project, 200);
     }
 
     public function getAllProjectsByAdminId(Request $request,$adminid){
         $project = Project::where('adminid',$adminid)->get();
+        
+        foreach ($project as $p) {
+            $total_time = 0;
+            $report = Report::where('project_id', $p['id'])->get();
+
+            foreach ($report as $r) {
+                $r['end'] != NULL ? (
+                    $total_time += strtotime($r['end']) - strtotime($r['start'])
+                ) : NULL;
+            }
+
+            $p['adminid'] = User::where('id', $p['adminid'])->pluck('full_name')[0];
+            $p['total_time'] = $total_time;
+        }
 
         return response($project, 200);
     }
 
     public function getAllProjects() {
         $project = Project::all();
+
+        foreach ($project as $p) {
+            $total_time = 0;
+            $report = Report::where('project_id', $p['id'])->get();
+
+            foreach ($report as $r) {
+                $r['end'] != NULL ? (
+                    $total_time += strtotime($r['end']) - strtotime($r['start'])
+                ) : NULL;
+            }
+
+            $p['adminid'] = User::where('id', $p['adminid'])->pluck('full_name')[0];
+            $p['total_time'] = $total_time;
+        }
 
         return response($project, 200);
     }
@@ -45,6 +88,18 @@ class ApiProjectController extends Controller
         if ((auth()->user()->id != $project['userid']) && auth()->user()->role != "admin") {
             return response(["errors" => array("You Are Not Authenticated")], 422);
         }
+
+        $report = Report::where('project_id', $project['id'])->get();
+        
+        $total_time = 0;
+        foreach ($report as $r) {
+            $r['end'] != NULL ? (
+                $total_time += strtotime($r['end']) - strtotime($r['start'])
+            ) : NULL;
+        }
+
+        $project['total_time'] = $total_time;
+        $project['adminid'] = User::where('id', $project['adminid'])->pluck('full_name')[0];
 
         return response($project, 200);
     }

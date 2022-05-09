@@ -11,6 +11,11 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
+class person {
+    public $name;
+    public $total;
+}
+
 class ApiReportController extends Controller
 {
     public function getAllReportsByProjectId(Request $request, $projectid) {
@@ -27,7 +32,52 @@ class ApiReportController extends Controller
             return response(["errors" => array("You Are Not Authenticated")], 422);
         }
 
-        return response($report, 200);
+        $admin = User::where('role', 'admin')->pluck('full_name');
+        $work = array();
+        $workload = array();
+
+        foreach ($report as $r) {
+            $r['end'] != NULL ? (
+                $r['total_time'] = strtotime($r['end']) - strtotime($r['start'])
+            ) : $r['total_time'] = NULL;
+
+            if ($r['total_time'] != NULL) {
+                $hour = floor($r['total_time'] / 3600);
+                $min = (($r['total_time'] / 60) % 60);
+                $r['bySecond'] = $r['total_time'];
+                $r['total_time'] = sprintf("%02d:%02d", $hour, $min);
+            }
+
+            $adminCov = User::whereIn('id', (explode(",", $r['admin'])))->pluck('full_name');
+            $r['admin'] = $adminCov;
+            
+            foreach ($adminCov as $a) {
+                for ($i = 0; $i < count($admin); $i++) {
+                    if ($a == $admin[$i]) {
+                        array_key_exists($a, $work) ? (
+                            $work[$a] += $r['bySecond'] ? (int)$r['bySecond'] : 0
+                        ) : (
+                            $work[$a] = $r['bySecond'] ? (int)$r['bySecond'] : 0
+                        );
+                        continue;
+                    }
+                }
+            }
+        }
+
+        $i = 0;
+        
+        foreach ($work as $id => $val) {
+            $tmp = new person();
+            $tmp->name = $id;
+            $tmp->total = sprintf("%02d:%02d", $val / 3600, ($val / 60) % 60);
+            array_push($workload, $tmp);
+        }
+
+        $response['report'] = $report;
+        $response['workload'] = $workload;
+
+        return response($response, 200);
     }
     
     public function getOneReportById(Request $request,$id){
@@ -46,6 +96,8 @@ class ApiReportController extends Controller
             return response(["errors" => array("You Are Not Authenticated")], 422);
         }
 
+        $adminCov = User::whereIn('id', (explode(",", $report['admin'])))->pluck('full_name');
+        $report['adminByName'] = $adminCov;
 
         return response($report, 200);
     }
@@ -78,16 +130,17 @@ class ApiReportController extends Controller
 
         $admin = Arr::add($admin, $count++, $tmp);
 
-        $res = "";
+        $res['errors'] = [];
+        $err = 0;
         for ($i = 0; $i < $count; $i++) {
             $user = User::where('id', (int)$admin[$i])->first();
             if ($user['role'] != 'admin') {
-                $res .= $user['full_name']." not an admin\n";
+                $res['errors'] = Arr::add($res['errors'], $err++, $user['full_name']." not an admin\n");
             }
         }
 
-        if ($res != "")
-            return response(array($res), 422);
+        if ($res['errors'] != [])
+            return response($res, 422);
 
         $request['end'] = $request['end'] == NULL ? NULL : $request['end'];
         $request['attachment'] = $request['attachment'] == NULL ? NULL : $request['attachment'];
@@ -99,12 +152,12 @@ class ApiReportController extends Controller
 
     public function updateReport(Request $request) {
         $validator = Validator::make($request->all(), [
-            'id' => 'required|integer|exists:projects',
+            'id' => 'required|integer|exists:reports',
             'description' => 'required|string|max:255',
             'start' => 'required|date_format:Y/m/d H:i:s',
-            'end' => 'date_format:Y/m/d H:i:s',
+            'end' => 'date_format:Y/m/d H:i:s|nullable',
             'admin' => 'required|string|max:255',
-            'attachment' => 'string|max:255'
+            'attachment' => 'string|max:255|nullable'
         ]);
         if ($validator->fails())
         {
@@ -127,15 +180,16 @@ class ApiReportController extends Controller
 
         $admin = Arr::add($admin, $count++, $tmp);
 
-        $res = "";
+        $res['errors'] = [];
+        $err = 0;
         for ($i = 0; $i < $count; $i++) {
             $user = User::where('id', (int)$admin[$i])->first();
             if ($user['role'] != 'admin') {
-                $res .= $user['full_name']." not an admin\n";
+                $res['errors'] = Arr::add($res['errors'], $err++, $user['full_name']." not an admin\n");
             }
         }
 
-        if ($res != "")
+        if ($res['errors'] != [])
             return response($res, 422);
 
         $report = Report::where('id', $request['id'])->first();
