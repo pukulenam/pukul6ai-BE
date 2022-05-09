@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\ApiAuthController;
 use App\Http\Controllers\Project\ApiProjectController;
 use App\Http\Controllers\Report\ApiReportController;
 use App\Http\Controllers\User\ApiUserController;
+use App\Models\User;
 use Facade\FlareClient\Api;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -34,7 +35,7 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
     //secure
     Route::get('/report/project/{projectid}', [ApiReportController::class, 'getAllReportsByProjectId']);
 
-    //
+    //secure
     Route::get('/report/{id}', [ApiReportController::class, 'getOneReportById']);
 });
 
