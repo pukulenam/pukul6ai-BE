@@ -191,6 +191,10 @@ class ApiReportController extends Controller
             }
         }
 
+        if ((int)strtotime($request['end']) - (int)strtotime($request['start']) < 0) {
+            $res['errors'] = Arr::add($res['errors'], $err++, "End Date Should be AFTER Start Date");
+        }
+
         if ($res['errors'] != [])
             return response($res, 422);
 

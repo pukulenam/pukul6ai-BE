@@ -17,8 +17,6 @@ class Schedules extends Migration
             $table->id();
             $table->unsignedBigInteger('userid');
             $table->foreign('userid')->references('id')->on('users');
-            $table->unsignedBigInteger('adminid');
-            $table->foreign('adminid')->references('id')->on('users');
             $table->string('name');
             $table->date('time');
             $table->timestamps();
