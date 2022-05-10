@@ -7,6 +7,7 @@ use App\Models\Project;
 use App\Models\Report;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Validator;
 
 class ApiProjectController extends Controller
@@ -28,7 +29,7 @@ class ApiProjectController extends Controller
                 ) : NULL;
             }
 
-            $p['adminid'] = User::where('id', $p['adminid'])->pluck('full_name')[0];
+            $p['adminbyname'] = User::where('id', $p['adminid'])->pluck('full_name')[0];
             $p['total_time'] = $total_time;
         }
 
@@ -48,7 +49,7 @@ class ApiProjectController extends Controller
                 ) : NULL;
             }
 
-            $p['adminid'] = User::where('id', $p['adminid'])->pluck('full_name')[0];
+            $p['adminbyname'] = User::where('id', $p['adminid'])->pluck('full_name')[0];
             $p['total_time'] = $total_time;
         }
 
@@ -68,7 +69,7 @@ class ApiProjectController extends Controller
                 ) : NULL;
             }
 
-            $p['adminid'] = User::where('id', $p['adminid'])->pluck('full_name')[0];
+            $p['adminbyname'] = User::where('id', $p['adminid'])->pluck('full_name')[0];
             $p['total_time'] = $total_time;
         }
 
@@ -99,7 +100,7 @@ class ApiProjectController extends Controller
         }
 
         $project['total_time'] = $total_time;
-        $project['adminid'] = User::where('id', $project['adminid'])->pluck('full_name')[0];
+        $project['adminbyname'] = User::where('id', $project['adminid'])->pluck('full_name')[0];
 
         return response($project, 200);
     }
@@ -117,11 +118,19 @@ class ApiProjectController extends Controller
             return response(['errors'=>$validator->errors()->all()], 422);
         }
 
+        $res['errors'] = [];
+        $err = 0;
         $is_admin = User::where('id', $request['adminid'])->first();
         if ($is_admin['role'] != 'admin') {
-            $res['errors'] = array($is_admin['full_name'] . "is not an admin");
-            return response($res, 422);
+            $res['errors'] = Arr::add($res['errors'], $err++, $is_admin['full_name'] . "is not an admin");
         }
+
+        if ((int)strtotime($request['end']) - (int)strtotime($request['start']) < 0) {
+            $res['errors'] = Arr::add($res['errors'], $err++, "End Date Should be AFTER Start Date");
+        }
+
+        if ($res['errors'] != [])
+            return response($res, 422);
 
         $request['progress'] = 0;
         $request['start'] = $request['start'] ? NULL : $request['start'];
@@ -146,6 +155,21 @@ class ApiProjectController extends Controller
         {
             return response(['errors'=>$validator->errors()->all()], 422);
         }
+
+        $res['errors'] = [];
+        $err = 0;
+
+        $is_admin = User::where('id', $request['adminid'])->first();
+        if ($is_admin['role'] != 'admin') {
+            $res['errors'] = Arr::add($res['errors'], $err++, $is_admin['full_name'] . "is not an admin");
+        }
+
+        if ((int)strtotime($request['end']) - (int)strtotime($request['start']) < 0) {
+            $res['errors'] = Arr::add($res['errors'], $err++, "End Date Should be AFTER Start Date");
+        }
+
+        if ($res['errors'] != [])
+            return response($res, 422);
 
         $Project = Project::where('id', $request->id)->first();
         $Project['userid'] = $request['userid'] ? $request['userid'] : $Project['userid'];

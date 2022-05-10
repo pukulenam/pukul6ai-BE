@@ -41,7 +41,8 @@ Route::group(['middleware' => ['auth:sanctum']], function() {
 
     //not check
     Route::get('/schedule/user/{id}', [ApiScheduleController::class, 'getOneScheduleByUserId']);
-
+    //not check
+    Route::post('/schedule', [ApiScheduleController::class, 'addSchedule']);
 });
 
 Route::group(['middleware' => ['auth:sanctum', 'is_admin']], function() {
@@ -58,8 +59,7 @@ Route::group(['middleware' => ['auth:sanctum', 'is_admin']], function() {
     Route::delete('/report', [ApiReportController::class, 'deleteReport']);
 
     Route::get('/schedule', [ApiScheduleController::class, 'getAllSchedule']);
-    Route::post('/schedule', [ApiScheduleController::class, 'addSchedule']);
-    Route::get('/schedule/admin/{id}', [ApiScheduleController::class, 'getOneScheduleByAdminId']);
+    Route::get('/schedule/admin/{id}', [ApiScheduleController::class, 'getAllSchedule']);
 });
 
 Route::group(['middleware' => ['cors', 'json.response']], function () {
